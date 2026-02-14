@@ -1,6 +1,6 @@
-# text_to_speech
+# PracticeTalk
 
-Small demo: browser-based talk-practice UI that uses `edge-tts` (Microsoft neural voices).
+This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative.
 
 Features
 - Upload a `.txt` file or paste text and synthesize speech.
@@ -22,17 +22,7 @@ Docker
 - Run: docker run -p 8000:8000 talk-practice
 
 GitHub Actions hosting
-- The workflow `publish.yml` (push → main) does two things:
-  - Deploys the `static/` site to **GitHub Pages** (frontend only).
-  - Builds and pushes a Docker image to **GitHub Container Registry (GHCR)** at `ghcr.io/<owner>/text_to_speech:latest`.
-
-To run the backend container after GHCR publish:
-
-```bash
-docker run -p 8000:8000 ghcr.io/<your-org-or-username>/text_to_speech:latest
-```
-
-When the frontend is hosted on GitHub Pages, run the backend container (from GHCR) and point the frontend at its URL if needed; the demo assumes same-origin hosting for the UI and backend.
+- The workflow `publish.yml` (push → main) deploys the `static/` site to **GitHub Pages** at `https://jaeyk.github.io/text_to_speech/`.
 
 Notes
 - Streaming uses MP3 chunk streaming (MediaSource in the web UI).
