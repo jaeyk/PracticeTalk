@@ -106,7 +106,7 @@ SENTENCE_END_RE = re.compile(r"(?<=[\.\?!])\s+")
 # Pace configuration -> (SSML prosody rate, pause multiplier)
 PACE_MAP = {
     "slow": ("-15%", 1.2),
-    "normal": ("0%", 1.0),
+    "normal": ("+0%", 1.0),
     "fast": ("+20%", 0.8),
     "faster": ("+40%", 0.6),
 }

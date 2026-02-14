@@ -1,60 +1,73 @@
 # PracticeTalk
 
-This is a simple, lightweight local speech synthesis tool with a web interface that turns your talk script into an audio file, allowing you to check its flow and narrative.
+PracticeTalk is a lightweight local speech synthesis tool with a web interface that turns your talk script into audio so you can review flow and narrative.
 
 Jae Yeon Kim and Codex (2026).
 
-Use modes
+## Recommended Mode
 
-- Recommended: run locally and use one URL only: `http://127.0.0.1:8000`
-- Advanced: use GitHub Pages UI (`https://jaeyk.github.io/PracticeTalk/`) with a separate backend URL
+Run locally and use one URL only:
 
-Features
+- `http://127.0.0.1:8000`
 
-- Upload a `.txt` file or paste text and synthesize speech.
-- Supports `en-US-AvaMultilingualNeural` (default) plus a few additional voices in the UI.
-- Chunked synthesis for long texts and optional streaming (MP3) so large inputs don't time out.
-- Adjustable `pace` (Slow, Normal, Fast, Faster) — pace adjusts speaking rate and sentence pause *length* (fixed base pause = 300ms).
-- Slide markers like `Slide 1 Slide 2` are automatically skipped during synthesis.
-- Output formats: `MP3` and `WAV`.
-- Includes a `Dockerfile` and a GitHub Actions smoke test.
+## Requirements
 
-Quick start
+- Python 3.10+
+- Internet connection (needed when synthesizing speech via `edge-tts`)
 
-1. python -m venv .venv && source .venv/bin/activate
-2. pip install -r requirements.txt
-3. uvicorn main:app --reload --port 8000
-4. Open <http://localhost:8000>
+Python package dependencies are in `requirements.txt`:
 
-Local setup for non-technical users (Windows, Mac, Linux)
+- `fastapi`
+- `uvicorn[standard]`
+- `edge-tts`
+- `python-multipart`
 
-1. Download ZIP from `https://github.com/jaeyk/PracticeTalk` and unzip.
-2. Install Python 3.12 from `https://www.python.org/downloads/`.
-3. Open a terminal in the unzipped folder.
-4. Run the commands for your operating system below.
+You do not need to install these manually if you use the launcher scripts below.
 
-Windows (Command Prompt)
+## Quick Start (Script-Based)
+
+### Mac / Linux
+
+macOS (double-click):
+
+- Double-click `run_local.command` in Finder.
+
+Run:
+
+```bash
+bash scripts/run_local.sh
+```
+
+What this script does:
+
+1. Finds Python 3
+2. Creates `.venv` if missing
+3. Installs dependencies from `requirements.txt`
+4. Starts server on `127.0.0.1:8000`
+5. Opens your browser automatically
+
+### Windows (Command Prompt)
+
+Run:
 
 ```bat
-py -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8000
+scripts\run_local.bat
 ```
 
-Mac (Terminal)
+What this script does:
+
+1. Finds `py` or `python`
+2. Creates `.venv` if missing
+3. Installs dependencies from `requirements.txt`
+4. Starts server on `127.0.0.1:8000`
+5. Opens your browser automatically
+
+## Manual Start (Advanced)
+
+If you prefer manual control:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8000
-```
-
-Linux (Terminal)
-
-```bash
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --host 127.0.0.1 --port 8000
@@ -64,24 +77,38 @@ Then open:
 
 - `http://127.0.0.1:8000`
 
-Stop the app:
+Stop the app with `Ctrl + C`.
 
-- Press `Ctrl + C` in the terminal.
+## Troubleshooting
 
-Docker
+- Python not found: install Python 3.10+ from `https://www.python.org/downloads/`, then run the launcher script again.
+- macOS blocked `run_local.command`: right-click the file, choose `Open`, then confirm `Open`.
+- Port `8000` already in use: stop the other app using port 8000, then restart the launcher script.
 
-- Build: docker build -t talk-practice .
-- Run: docker run -p 8000:8000 talk-practice
+## Features
 
-GitHub Actions hosting
+- Upload a `.txt` file or paste text and synthesize speech.
+- Supports `en-US-AvaMultilingualNeural` (default) plus additional voices in the UI.
+- Chunked synthesis for long texts.
+- Optional streaming (MP3) for long inputs.
+- Adjustable `pace` (Slow, Normal, Fast, Faster).
+- Slide markers like `Slide 1 Slide 2` are automatically skipped.
+- Output formats: `MP3` and `WAV`.
 
-- The workflow `publish.yml` (push → main) deploys the `static/` site to **GitHub Pages** at `https://jaeyk.github.io/PracticeTalk/`.
-- GitHub Pages is frontend-only. On that page, set **Backend URL** to your running FastAPI server (for example `https://<your-backend-host>`).
-- If you do not have a backend URL, run locally and open `http://127.0.0.1:8000` instead.
+## Docker
 
-Notes
+- Build: `docker build -t talk-practice .`
+- Run: `docker run -p 8000:8000 talk-practice`
 
-- Streaming uses MP3 chunk streaming (MediaSource in the web UI).
-- ETA & progress: the UI shows an estimated talk duration based on `pace` and text length and presents a playback progress bar while listening.
-- Processing can be slow for long scripts or busy voice service periods. Please be patient after clicking **Synthesize**.
-- Uploaded text must be UTF-8. Max input size ~200k characters (configurable in `main.py`).
+## GitHub Pages (Frontend Only)
+
+- Workflow `publish.yml` deploys `static/` to `https://jaeyk.github.io/PracticeTalk/`.
+- GitHub Pages is frontend-only.
+- On that page, set **Backend URL** to your running FastAPI server.
+- If you do not have a backend URL, use local mode at `http://127.0.0.1:8000`.
+
+## Notes
+
+- Uploaded text must be UTF-8.
+- Max input is about 200k characters (configurable in `main.py`).
+- Long scripts may take time to process.

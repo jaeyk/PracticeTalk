@@ -79,27 +79,24 @@
     <details style="margin-top:1rem;">
       <summary><strong>How to run locally (Windows, Mac, Linux)</strong></summary>
       <p class="note">Run locally for the easiest setup (frontend + backend together).</p>
+      <p><strong>Requirements:</strong> Python 3.10+ and internet access for speech synthesis.</p>
       <ol>
         <li>Download ZIP from <code>https://github.com/jaeyk/PracticeTalk</code> and unzip it.</li>
-        <li>Install Python 3.12 from <code>https://www.python.org/downloads/</code>.</li>
-        <li>Open a terminal in the unzipped project folder.</li>
+        <li>Install Python from <code>https://www.python.org/downloads/</code>.</li>
       </ol>
+      <p><strong>macOS (Finder, easiest)</strong></p>
+      <pre><code>Double-click: run_local.command</code></pre>
+      <p><strong>Mac / Linux (Terminal)</strong></p>
+      <pre><code>bash scripts/run_local.sh</code></pre>
       <p><strong>Windows (Command Prompt)</strong></p>
-      <pre><code>py -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
-      <p><strong>Mac (Terminal)</strong></p>
-      <pre><code>python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
-      <p><strong>Linux (Terminal)</strong></p>
-      <pre><code>python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
-      <p class="note">Open <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.</p>
+      <pre><code>scripts\run_local.bat</code></pre>
+      <p class="note">These scripts create <code>.venv</code>, install dependencies, start the server, and open <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.</p>
+      <p><strong>Troubleshooting</strong></p>
+      <ul>
+        <li><strong>Python not found:</strong> install Python 3.10+ from <code>https://www.python.org/downloads/</code>, then run the launcher script again.</li>
+        <li><strong>macOS blocked <code>run_local.command</code>:</strong> right-click the file, choose <em>Open</em>, then confirm <em>Open</em>.</li>
+        <li><strong>Port 8000 already in use:</strong> stop the other app using port 8000, then restart the launcher script.</li>
+      </ul>
     </details>
 
     <script>
