@@ -42,10 +42,6 @@
           </select>
         </label>
 
-        <label>Backend URL:
-          <input id="api_base" type="url" placeholder="(same origin) or https://api.example.com" style="width:260px" />
-        </label>
-
         <label>Pace:
           <select id="pace">
             <option value="slow">Slow</option>
@@ -53,10 +49,6 @@
             <option value="fast">Fast</option>
             <option value="faster">Faster</option>
           </select>
-        </label>
-
-        <label>Pause (ms):
-          <input id="pause_ms" type="number" min="0" max="2000" step="50" value="300" style="width:90px" />
         </label>
 
         <label title="Stream MP3 chunks as they are generated (MP3 only)">
@@ -67,6 +59,11 @@
         <a id="download" style="display:none" download>Download</a>
         <progress id="progress" value="0" max="100" style="display:none"></progress>
         <div id="status" class="note">Tip: text like "Slide 1 Slide 2" is skipped and replaced with a 3s pause.</div>
+
+        <div style="width:100%; margin-top:8px;">
+          <div id="eta_text" class="note"></div>
+          <progress id="talk_progress" value="0" max="100" style="width:100%; display:none"></progress>
+        </div>
       </div>
     </form>
 
@@ -82,9 +79,13 @@
       const voiceSelect = document.getElementById('voice');
       const formatSelect = document.getElementById('format');
       const paceSelect = document.getElementById('pace');
-      const pauseInput = document.getElementById('pause_ms');
       const streamCheckbox = document.getElementById('stream');
       const progressEl = document.getElementById('progress');
+
+      // ETA / talk progress (values set after estimate)
+      let estimatedSeconds = 0;
+      const etaText = document.getElementById('eta_text');
+      const talkProgress = document.getElementById('talk_progress');
 
       // Disable streaming when WAV is selected
       formatSelect.addEventListener('change', () => {
@@ -96,11 +97,6 @@
         }
       });
 
-      function getApiUrl(path) {
-        const base = (document.getElementById('api_base')?.value || '').trim().replace(/\/$/, '');
-        if (!base) return path.startsWith('/') ? path : '/' + path;
-        return base + (path.startsWith('/') ? path : '/' + path);
-      }
 
       function setBusy(on) {
         btn.disabled = on;
@@ -108,7 +104,7 @@
       }
 
       async function synthesizeNormal(fd) {
-        const resp = await fetch(getApiUrl('/synthesize'), { method: 'POST', body: fd });
+        const resp = await fetch('/synthesize', { method: 'POST', body: fd });
         if (!resp.ok) {
           const err = await resp.json().catch(()=>null);
           throw new Error(err?.detail || resp.statusText);
@@ -135,59 +131,37 @@
         });
       }
 
-      async function synthesizeStream(fd) {
-        const resp = await fetch(getApiUrl('/synthesize_stream'), { method: 'POST', body: fd });
-        if (!resp.ok) {
-          const err = await resp.json().catch(()=>null);
-          throw new Error(err?.detail || resp.statusText);
-        }
-
-        // Use MediaSource to play progressive MP3
-        const mediaSource = new MediaSource();
-        player.src = URL.createObjectURL(mediaSource);
-
-        return new Promise((resolve, reject) => {
-          mediaSource.addEventListener('sourceopen', async () => {
-            let mime = 'audio/mpeg';
-            let sourceBuffer;
-            try {
-              sourceBuffer = mediaSource.addSourceBuffer(mime);
-            } catch (e) {
-              reject(new Error('MediaSource does not support audio/mpeg in this browser'));
-              return;
-            }
-
-            const reader = resp.body.getReader();
-            let received = 0;
-
-            async function read() {
-              try {
-                const { done, value } = await reader.read();
-                if (done) {
-                  // wait for any pending updates, then close
-                  const onUpdateEnd = () => {
-                    try { mediaSource.endOfStream(); } catch (e) {}
-                    resolve();
-                  };
-                  if (!sourceBuffer.updating) onUpdateEnd(); else sourceBuffer.addEventListener('updateend', onUpdateEnd, { once: true });
-                  return;
-                }
-                received += value.length;
-                progressEl.style.display = 'inline-block';
-                progressEl.value = Math.min(99, (received / 10000) * 100);
-
-                const chunk = value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength);
-                await appendBufferAsync(sourceBuffer, chunk);
-                read();
-              } catch (err) {
-                reject(err);
-              }
-            }
-
-            read();
-          });
-        });
+      function formatTime(s) {
+        s = Math.max(0, Math.round(s));
+        const m = Math.floor(s / 60);
+        const sec = (s % 60).toString().padStart(2, '0');
+        return `${m}:${sec}`;
       }
+
+      player.addEventListener('loadedmetadata', () => {
+        if (player.duration && isFinite(player.duration) && player.duration > 0) {
+          if (player.duration > estimatedSeconds) {
+            estimatedSeconds = player.duration;
+            etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
+          }
+        }
+      });
+
+      player.addEventListener('timeupdate', () => {
+        const total = estimatedSeconds && isFinite(estimatedSeconds) ? Math.max(estimatedSeconds, player.duration || 0) : (player.duration || 0);
+        if (total > 0) {
+          talkProgress.style.display = 'block';
+          const pct = Math.min(100, (player.currentTime / total) * 100);
+          talkProgress.value = pct;
+          const remaining = Math.max(0, Math.round(total - player.currentTime));
+          etaText.textContent = 'ETA: ' + formatTime(remaining);
+        }
+      });
+
+      player.addEventListener('ended', () => {
+        talkProgress.value = 100;
+        etaText.textContent = 'Done';
+      });
 
       async function runSynthesis() {
         status.textContent = '';
@@ -195,12 +169,44 @@
         progressEl.style.display = 'none';
         progressEl.value = 0;
         download.style.display = 'none';
+        etaText.textContent = '';
+        talkProgress.style.display = 'none';
+        talkProgress.value = 0;
+        estimatedSeconds = 0;
+
+        // estimate first
+        const fdEstimate = new FormData();
+        fdEstimate.append('voice', voiceSelect.value);
+        fdEstimate.append('pace', paceSelect.value);
+        if (fileInput.files.length) {
+          fdEstimate.append('file', fileInput.files[0]);
+        } else {
+          fdEstimate.append('text', textInput.value);
+        }
+
+        try {
+          const estResp = await fetch('/estimate', { method: 'POST', body: fdEstimate });
+          if (estResp.ok) {
+            const est = await estResp.json();
+            estimatedSeconds = Math.max(1, est.estimated_seconds || (est.speech_seconds + est.pause_seconds + est.slide_pause_seconds));
+            etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
+            talkProgress.value = 0;
+            talkProgress.style.display = 'block';
+          } else {
+            estimatedSeconds = 0;
+            etaText.textContent = '';
+            talkProgress.style.display = 'none';
+          }
+        } catch (e) {
+          estimatedSeconds = 0;
+          etaText.textContent = '';
+          talkProgress.style.display = 'none';
+        }
 
         const fd = new FormData();
         fd.append('voice', voiceSelect.value);
         fd.append('fmt', formatSelect.value);
         fd.append('pace', paceSelect.value);
-        fd.append('pause_ms', pauseInput.value);
 
         if (fileInput.files.length) {
           fd.append('file', fileInput.files[0]);

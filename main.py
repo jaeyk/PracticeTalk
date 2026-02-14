@@ -42,6 +42,64 @@ async def list_voices():
     return JSONResponse(content=VOICES)
 
 
+@app.post("/estimate")
+async def estimate(file: UploadFile | None = File(None), text: str | None = Form(None), pace: str | None = Form("normal")):
+    """Return an estimated duration (seconds) for the provided text.
+
+    Uses a fixed base sentence pause (300ms) which is scaled by `pace`.
+    Response JSON includes: estimated_seconds, speech_seconds, pause_seconds,
+    slide_pause_seconds, words, chars, sentences, slide_pauses, chunk_count.
+    """
+    if file is None and (text is None or not text.strip()):
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    if file is not None:
+        content = await file.read()
+        try:
+            text_to_est = content.decode("utf-8")
+        except Exception:
+            raise HTTPException(status_code=400, detail="Uploaded file must be UTF-8 text")
+    else:
+        text_to_est = (text or "").strip()
+
+    if not text_to_est:
+        raise HTTPException(status_code=400, detail="Text is empty")
+
+    # preprocess slides
+    preprocessed = preprocess_slides(text_to_est)
+
+    words = len(re.findall(r"\w+", preprocessed))
+    chars = len(preprocessed)
+    sentences = len(SENTENCE_END_RE.findall(preprocessed))
+    slide_pauses = preprocessed.count("__SLIDE_PAUSE__")
+
+    # resolve pace -> pause multiplier
+    prosody_rate, pause_multiplier = resolve_pace(pace or "normal")
+    base_pause = DEFAULT_PAUSE_MS
+    pause_seconds = (base_pause * pause_multiplier * sentences) / 1000.0
+    slide_pause_seconds = slide_pauses * 3.0
+
+    # approximate speaking time using words-per-minute per pace
+    WPM = {"slow": 120, "normal": 160, "fast": 200, "faster": 240}
+    wpm = WPM.get((pace or "normal").lower(), 160)
+    speech_seconds = (words / max(1, wpm)) * 60.0
+
+    estimated_seconds = speech_seconds + pause_seconds + slide_pause_seconds + 0.25
+    chunk_count = len(split_text(preprocessed, max_chars=4000))
+
+    return JSONResponse(content={
+        "estimated_seconds": round(estimated_seconds, 2),
+        "speech_seconds": round(speech_seconds, 2),
+        "pause_seconds": round(pause_seconds, 2),
+        "slide_pause_seconds": round(slide_pause_seconds, 2),
+        "words": words,
+        "chars": chars,
+        "sentences": sentences,
+        "slide_pauses": slide_pauses,
+        "chunk_count": chunk_count,
+    })
+
+
 SENTENCE_END_RE = re.compile(r"(?<=[\.\?!])\s+")
 
 
@@ -52,6 +110,9 @@ PACE_MAP = {
     "fast": ("+20%", 0.8),
     "faster": ("+40%", 0.6),
 }
+
+# default base pause (ms) inserted after sentence punctuation
+DEFAULT_PAUSE_MS = 300
 
 # match groups of Slide markers (e.g. "Slide 1 Slide 2 Slide 3")
 SLIDE_RE = re.compile(r"(?:Slide\s*\d+\s*){1,}", flags=re.IGNORECASE)
@@ -136,12 +197,11 @@ async def synthesize(
     voice: str | None = Form("en-US-AvaMultilingualNeural"),
     fmt: str | None = Form("mp3"),
     pace: str | None = Form("normal"),
-    pause_ms: int | None = Form(300),
 ):
     """Synthesize text (file upload or pasted text).
 
     - `pace` controls speaking rate (slow | normal | fast | faster).
-    - `pause_ms` sets the base sentence pause (multiplied by pace).
+    - Uses a fixed base sentence pause (300ms) scaled by `pace`.
     - `Slide N` sequences are skipped and replaced with a 3s pause.
     """
     if file is None and (text is None or not text.strip()):
@@ -165,7 +225,7 @@ async def synthesize(
 
     # validate inputs
     prosody_rate, pause_multiplier = resolve_pace(pace or "normal")
-    base_pause = max(0, int(pause_ms or 300))
+    base_pause = DEFAULT_PAUSE_MS
     effective_pause = max(0, int(base_pause * pause_multiplier))
 
     # preprocess slides (replace Slide markers with a token)
@@ -246,12 +306,12 @@ async def synthesize_stream(
     text: str | None = Form(None),
     voice: str | None = Form("en-US-AvaMultilingualNeural"),
     pace: str | None = Form("normal"),
-    pause_ms: int | None = Form(300),
 ):
     """Stream MP3 bytes as chunks are synthesized.
 
     This endpoint streams `audio/mpeg` and is intended for clients that can
     progressively consume MP3 (the web UI uses MediaSource when streaming).
+    Uses a fixed base sentence pause (300ms) scaled by `pace`.
     """
     if file is None and (text is None or not text.strip()):
         raise HTTPException(status_code=400, detail="No text provided")
@@ -271,7 +331,7 @@ async def synthesize_stream(
 
     # apply slide preprocessing and pace
     prosody_rate, pause_multiplier = resolve_pace(pace or "normal")
-    base_pause = max(0, int(pause_ms or 300))
+    base_pause = DEFAULT_PAUSE_MS
     effective_pause = max(0, int(base_pause * pause_multiplier))
     text_to_speak = preprocess_slides(text_to_speak)
 
