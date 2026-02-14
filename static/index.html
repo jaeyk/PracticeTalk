@@ -31,8 +31,9 @@
 
       <div class="controls">
         <label>Backend URL:
-          <input id="backend_url" type="url" placeholder="https://your-api-host" />
+          <input id="backend_url" type="url" placeholder="http://127.0.0.1:8000 (local) or https://your-api-host" />
         </label>
+        <span class="note">Example: <code>http://127.0.0.1:8000</code> (local backend)</span>
 
         <label>Voice:
           <select id="voice">
@@ -130,15 +131,18 @@
 
       const isGithubPages = window.location.hostname.endsWith('github.io');
       const modeNotice = document.getElementById('mode_notice');
+      const LOCAL_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
       const savedBackend = localStorage.getItem('practicetalk_backend_url') || '';
       if (savedBackend) {
         backendInput.value = savedBackend;
       } else if (!isGithubPages) {
-        backendInput.value = window.location.origin;
+        backendInput.value = window.location.origin || LOCAL_BACKEND_DEFAULT;
+      } else {
+        backendInput.value = LOCAL_BACKEND_DEFAULT;
       }
       if (isGithubPages) {
         modeNotice.style.display = 'block';
-        modeNotice.innerHTML = '<strong>Frontend-only page:</strong> this URL hosts only the interface. For easiest use, run locally and open <code>http://127.0.0.1:8000</code>. If you stay here, set a Backend URL first.';
+        modeNotice.innerHTML = '<strong>Frontend-only page:</strong> this URL hosts only the interface. Default backend is set to <code>http://127.0.0.1:8000</code> (for local backend). Change it if your API runs elsewhere.';
       }
       backendInput.addEventListener('change', () => {
         localStorage.setItem('practicetalk_backend_url', backendInput.value.trim());
