@@ -18,7 +18,8 @@
   </head>
   <body>
     <h1>PracticeTalk</h1>
-    <p>This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative. Co-developed by Jae Yeon Kim and Codex.</p>
+    <p>This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative.</p>
+    <p class="note"><strong>Developed by:</strong> Jae Yeon Kim and Codex.</p>
 
     <form id="form">
       <label>Text file (.txt): <input type="file" id="file" accept=".txt" /></label>
@@ -75,7 +76,12 @@
     <audio id="player" controls></audio>
     <details style="margin-top:1rem;">
       <summary><strong>How to run locally (Windows, Mac, Linux)</strong></summary>
-      <p class="note">Run locally for the easiest setup (frontend + backend together). Open terminal in the project folder, then run:</p>
+      <p class="note">Run locally for the easiest setup (frontend + backend together).</p>
+      <ol>
+        <li>Download ZIP from <code>https://github.com/jaeyk/PracticeTalk</code> and unzip it.</li>
+        <li>Install Python 3.12 from <code>https://www.python.org/downloads/</code>.</li>
+        <li>Open a terminal in the unzipped project folder.</li>
+      </ol>
       <p><strong>Windows (Command Prompt)</strong></p>
       <pre><code>py -m venv .venv
 .venv\Scripts\activate
