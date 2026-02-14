@@ -17,6 +17,41 @@ Quick start
 3. uvicorn main:app --reload --port 8000
 4. Open http://localhost:8000
 
+Local setup for non-technical users (Windows, Mac, Linux)
+1. Download ZIP from `https://github.com/jaeyk/PracticeTalk` and unzip.
+2. Install Python 3.12 from `https://www.python.org/downloads/`.
+3. Open a terminal in the unzipped folder.
+
+Windows (Command Prompt)
+```bat
+py -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+Mac (Terminal)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+Linux (Terminal)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+Then open:
+- `http://127.0.0.1:8000`
+
+Stop the app:
+- Press `Ctrl + C` in the terminal.
+
 Docker
 - Build: docker build -t talk-practice .
 - Run: docker run -p 8000:8000 talk-practice

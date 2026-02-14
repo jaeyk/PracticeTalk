@@ -73,6 +73,26 @@
     </form>
 
     <audio id="player" controls></audio>
+    <details style="margin-top:1rem;">
+      <summary><strong>How to run locally (Windows, Mac, Linux)</strong></summary>
+      <p class="note">Run locally for the easiest setup (frontend + backend together). Open terminal in the project folder, then run:</p>
+      <p><strong>Windows (Command Prompt)</strong></p>
+      <pre><code>py -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
+      <p><strong>Mac (Terminal)</strong></p>
+      <pre><code>python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
+      <p><strong>Linux (Terminal)</strong></p>
+      <pre><code>python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
+      <p class="note">Open <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.</p>
+    </details>
 
     <script>
       const btn = document.getElementById('speak');
