@@ -21,12 +21,18 @@ Jae Yeon Kim and Codex (2026).
 No installation required. Just run:
 
 ```bash
-docker run -p 8000:8000 jaeyk/talk-practice:latest
+docker run -p 7860:7860 jaeyk/talk-practice:latest
 ```
 
 *(Note: Replace `jaeyk/talk-practice:latest` with your actual image name if different)*
 
-Then open `http://127.0.0.1:8000` in your browser.
+Then open `http://127.0.0.1:7860` in your browser.
+
+## Cloud Deployment (Free)
+
+You can run this app without any local setup by deploying to **Hugging Face Spaces**.
+
+👉 [**See Deployment Guide**](DEPLOY.md)
 
 ## Manual Install (Optional)
 
