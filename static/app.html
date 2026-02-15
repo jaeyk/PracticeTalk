@@ -73,11 +73,6 @@
     </label>
 
     <div class="controls">
-      <label>Backend URL:
-        <input id="backend_url" type="url" placeholder="Leave blank to use this app's backend" />
-      </label>
-      <span class="note">Optional: set this only if your API is hosted elsewhere.</span>
-
       <label>Voice:
         <select id="voice">
           <option value="en-US-AvaMultilingualNeural">Ava (en-US)</option>
@@ -104,7 +99,7 @@
       </label>
 
       <label title="Stream MP3 chunks as they are generated (MP3 only)">
-        <input type="checkbox" id="stream" /> Stream as produced
+        <input type="checkbox" id="stream" checked /> Stream as produced
       </label>
 
       <button id="speak" type="button" class="btn">Synthesize →</button>
@@ -134,7 +129,6 @@
     const paceSelect = document.getElementById('pace');
     const streamCheckbox = document.getElementById('stream');
     const progressEl = document.getElementById('progress');
-    const backendInput = document.getElementById('backend_url');
 
     // ETA / talk progress (values set after estimate)
     let estimatedSeconds = 0;
@@ -151,36 +145,13 @@
       }
     });
 
-    const savedBackend = localStorage.getItem('practicetalk_backend_url') || '';
-    if (savedBackend) {
-      backendInput.value = savedBackend;
-    } else {
-      backendInput.value = window.location.origin;
-    }
-    backendInput.addEventListener('change', () => {
-      localStorage.setItem('practicetalk_backend_url', backendInput.value.trim());
-    });
-
-    function apiUrl(path) {
-      let base = backendInput.value.trim();
-      if (!base) return path;
-
-      // Ensure protocol exists
-      if (!/^https?:\/\//i.test(base)) {
-        base = 'http://' + base;
-      }
-
-      base = base.replace(/\/+$/, '');
-      return `${base}${path}`;
-    }
-
     function setBusy(on) {
       btn.disabled = on;
       if (!on) btn.textContent = 'Synthesize →';
     }
 
     async function synthesizeNormal(fd) {
-      const resp = await fetch(apiUrl('/synthesize'), { method: 'POST', body: fd });
+      const resp = await fetch('/synthesize', { method: 'POST', body: fd });
       if (!resp.ok) {
         const raw = await resp.text().catch(() => '');
         let detail = '';
@@ -196,7 +167,7 @@
     }
 
     async function synthesizeStream(fd) {
-      const resp = await fetch(apiUrl('/synthesize_stream'), { method: 'POST', body: fd });
+      const resp = await fetch('/synthesize_stream', { method: 'POST', body: fd });
       if (!resp.ok || !resp.body) {
         const raw = await resp.text().catch(() => '');
         let detail = '';
@@ -299,45 +270,43 @@
       talkProgress.value = 0;
       estimatedSeconds = 0;
 
-      // estimate first
-      const fdEstimate = new FormData();
-      fdEstimate.append('voice', voiceSelect.value);
-      fdEstimate.append('pace', paceSelect.value);
-      if (fileInput.files.length) {
-        fdEstimate.append('file', fileInput.files[0]);
-      } else {
-        fdEstimate.append('text', textInput.value);
-      }
-
-      try {
-        const estResp = await fetch(apiUrl('/estimate'), { method: 'POST', body: fdEstimate });
-        if (estResp.ok) {
-          const est = await estResp.json();
-          estimatedSeconds = Math.max(1, est.estimated_seconds || (est.speech_seconds + est.pause_seconds + est.slide_pause_seconds));
-          etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
-          talkProgress.value = 0;
-          talkProgress.style.display = 'block';
+      // Estimate adds another request; skip it for streaming and short pasted text.
+      const isShortPastedText = !fileInput.files.length && textInput.value.length < 2000;
+      const shouldEstimate = !streamCheckbox.checked && !isShortPastedText;
+      if (shouldEstimate) {
+        const fdEstimate = new FormData();
+        fdEstimate.append('voice', voiceSelect.value);
+        fdEstimate.append('pace', paceSelect.value);
+        if (fileInput.files.length) {
+          fdEstimate.append('file', fileInput.files[0]);
         } else {
+          fdEstimate.append('text', textInput.value);
+        }
+
+        try {
+          const estResp = await fetch('/estimate', { method: 'POST', body: fdEstimate });
+          if (estResp.ok) {
+            const est = await estResp.json();
+            estimatedSeconds = Math.max(1, est.estimated_seconds || (est.speech_seconds + est.pause_seconds + est.slide_pause_seconds));
+            etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
+            talkProgress.value = 0;
+            talkProgress.style.display = 'block';
+          } else {
+            estimatedSeconds = 0;
+            etaText.textContent = '';
+            talkProgress.style.display = 'none';
+          }
+        } catch (e) {
           estimatedSeconds = 0;
           etaText.textContent = '';
           talkProgress.style.display = 'none';
         }
-      } catch (e) {
-        estimatedSeconds = 0;
-        etaText.textContent = '';
-        talkProgress.style.display = 'none';
       }
 
       const fd = new FormData();
       fd.append('voice', voiceSelect.value);
       fd.append('fmt', formatSelect.value);
       fd.append('pace', paceSelect.value);
-
-      if (isGithubPages && !backendInput.value.trim()) {
-        status.textContent = 'Set Backend URL first (GitHub Pages hosts only the frontend).';
-        setBusy(false);
-        return;
-      }
 
       if (fileInput.files.length) {
         fd.append('file', fileInput.files[0]);

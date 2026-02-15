@@ -1,16 +1,15 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.background import BackgroundTask
 import tempfile
 import os
 import re
-import asyncio
 import wave
 import sys
 import edge_tts
-from typing import List
+from typing import List, AsyncIterator
 from pathlib import Path
 
 
@@ -196,6 +195,16 @@ def prepare_text_for_chunk(chunk: str) -> str:
 def resolve_pace(pace: str):
     return PACE_MAP.get((pace or "").lower(), PACE_MAP["normal"])
 
+
+async def iter_mp3_audio_bytes(text_chunk: str, voice: str, prosody_rate: str) -> AsyncIterator[bytes]:
+    """Yield MP3 bytes directly from edge-tts streaming events."""
+    communicator = edge_tts.Communicate(text_chunk, voice=voice, rate=prosody_rate)
+    async for event in communicator.stream():
+        if event.get("type") == "audio":
+            data = event.get("data")
+            if data:
+                yield data
+
 @app.post("/synthesize")
 async def synthesize(
     file: UploadFile | None = File(None),
@@ -244,31 +253,19 @@ async def synthesize(
 
     # --- MP3 path: synthesize per-chunk and append bytes ---
     if fmt == "mp3":
-        fd, out_path = tempfile.mkstemp(suffix=".mp3")
-        os.close(fd)
-        try:
-            with open(out_path, "ab") as out_f:
-                for chunk in chunks:
-                    tmpfd, tmp_path = tempfile.mkstemp(suffix=".mp3")
-                    os.close(tmpfd)
-                    try:
-                        text_chunk = prepare_text_for_chunk(chunk)
-                        communicator = edge_tts.Communicate(text_chunk, voice=voice, rate=prosody_rate)
-                        await communicator.save(tmp_path)
-                        with open(tmp_path, "rb") as r:
-                            out_f.write(r.read())
-                    finally:
-                        try:
-                            os.remove(tmp_path)
-                        except Exception:
-                            pass
-            return FileResponse(out_path, media_type="audio/mpeg", filename="speech.mp3", background=BackgroundTask(lambda: os.remove(out_path)))
-        except Exception:
-            try:
-                os.remove(out_path)
-            except Exception:
-                pass
-            raise
+        audio_bytes = bytearray()
+        for chunk in chunks:
+            text_chunk = prepare_text_for_chunk(chunk).strip()
+            if not text_chunk:
+                continue
+            async for data in iter_mp3_audio_bytes(text_chunk, voice=voice, prosody_rate=prosody_rate):
+                audio_bytes.extend(data)
+
+        return Response(
+            content=bytes(audio_bytes),
+            media_type="audio/mpeg",
+            headers={"Content-Disposition": 'attachment; filename="speech.mp3"'},
+        )
 
     # --- WAV path: merge WAV frames properly using wave module ---
     fd, out_path = tempfile.mkstemp(suffix=".wav")
@@ -343,24 +340,11 @@ async def synthesize_stream(
 
     async def generator():
         for chunk in chunks:
-            tmpfd, tmp_path = tempfile.mkstemp(suffix=".mp3")
-            os.close(tmpfd)
-            try:
-                text_chunk = prepare_text_for_chunk(chunk)
-                communicator = edge_tts.Communicate(text_chunk, voice=voice, rate=prosody_rate)
-                await communicator.save(tmp_path)
-                with open(tmp_path, "rb") as r:
-                    while True:
-                        data = r.read(16 * 1024)
-                        if not data:
-                            break
-                        yield data
-                        await asyncio.sleep(0)
-            finally:
-                try:
-                    os.remove(tmp_path)
-                except Exception:
-                    pass
+            text_chunk = prepare_text_for_chunk(chunk).strip()
+            if not text_chunk:
+                continue
+            async for data in iter_mp3_audio_bytes(text_chunk, voice=voice, prosody_rate=prosody_rate):
+                yield data
 
     return StreamingResponse(generator(), media_type="audio/mpeg")
 
