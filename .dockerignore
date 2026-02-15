@@ -3,6 +3,10 @@ __pycache__/
 .venv/
 venv/
 env/
+dist/
+build/
+.git/
+.github/
 *.mp3
 *.wav
 .env

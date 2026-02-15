@@ -3,16 +3,48 @@ name: Deploy to Hugging Face Spaces
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - name: Push to hub
+          fetch-depth: 1
+      - name: Push snapshot to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_REPO: ${{ vars.HF_SPACE_REPO }}
+          HF_SPACE_REPO_FALLBACK: jaeykim/PracticeTalk
         run: |
-          git push --force https://oauth2:$HF_TOKEN@huggingface.co/spaces/jaeykim/PracticeTalk main
+          set -euo pipefail
+
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "HF_TOKEN secret is missing"
+            exit 1
+          fi
+
+          SPACE_REPO="${HF_SPACE_REPO:-$HF_SPACE_REPO_FALLBACK}"
+          echo "Deploying to Space: $SPACE_REPO"
+
+          DEPLOY_DIR="$(mktemp -d)"
+          rsync -av --delete \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude ".venv/" \
+            --exclude "__pycache__/" \
+            --exclude "dist/" \
+            --exclude "build/" \
+            ./ "$DEPLOY_DIR"/
+
+          cd "$DEPLOY_DIR"
+          git init -b main
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git commit -m "Deploy from ${GITHUB_SHA}"
+          git remote add origin "https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${SPACE_REPO}"
+          git push --force origin main
