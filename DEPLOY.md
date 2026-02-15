@@ -24,11 +24,11 @@ If you don't want to run the app locally, you can deploy it for free on Hugging 
     - **Value**: (Paste your token)
 3. **Update Config**:
     - Edit `.github/workflows/deploy-space.yml` in this repo.
-    - Change `jaeyk/practice-talk` to your actual Space name (e.g., `your-username/space-name`).
+    - Change `jaeykim/PracticeTalk` to your actual Space name (if different).
 4. **Push**:
     - Once you push this code to GitHub, the Action will run and deploy your app to Spaces automatically!
 
-### Option 2: Manual Uploadfs
+### Option 2: Manual Uploads
 
 1. **Upload Files**:
     - Upload the contents of this repository to your Space.
