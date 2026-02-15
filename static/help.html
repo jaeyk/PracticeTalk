@@ -82,8 +82,7 @@
     <main class="wrap">
       <section class="hero">
         <h1>PracticeTalk Setup Guide</h1>
-        <p>Install and start PracticeTalk without using the terminal.</p>
-        <p class="muted">If you only want to start now, install the app for your platform, launch it, and use <code>http://127.0.0.1:8000</code> in your browser.</p>
+        <p>Install and start PracticeTalk.</p>
         <a class="btn" href="app.html">Open PracticeTalk</a>
       </section>
 
@@ -101,16 +100,17 @@
       <div class="grid">
         <article class="card ok">
           <h3>Recommended: Installer</h3>
-          <p>Use the installer package from your download source:</p>
+          <p>Download installers from GitHub Releases:</p>
           <div class="file-links">
             <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-mac.pkg">Download macOS installer (.pkg)</a><br />
             <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-Setup.exe">Download Windows installer (.exe)</a>
           </div>
+          <p class="muted"><a href="https://github.com/jaeyk/PracticeTalk/releases/latest">If direct download does not start, open latest release files</a></p>
           <p>This gives you standard app installation and shortcuts.</p>
         </article>
         <article class="card">
           <h3>Portable App</h3>
-          <p>If you received a portable build instead of an installer:</p>
+          <p>Portable files are also available:</p>
           <div class="file-links">
             <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-mac.zip">Download portable macOS app (.zip)</a><br />
             <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk.exe">Download portable Windows app (.exe)</a>
@@ -161,5 +161,30 @@
         </ul>
       </article>
     </main>
+    <script>
+      (function() {
+        // specific repo name
+        const REPO = "PracticeTalk";
+        const isGithub = window.location.hostname.endsWith('github.io');
+        
+        // If NOT on github.io, assume we are local (or a custom deployment)
+        // and try to point download links to /dist/... if possible.
+        if (!isGithub) {
+          const links = document.querySelectorAll('.file-links a');
+          links.forEach(link => {
+            const href = link.getAttribute('href');
+            // If it links to the standard github release pattern
+            if (href && href.includes('github.com') && href.includes('/releases/latest/download/')) {
+              // extract filename e.g. "PracticeTalk-mac.pkg"
+              const filename = href.split('/').pop();
+              // Rewrite to local dist
+              link.setAttribute('href', `/dist/${filename}`);
+              // Update text so user knows it's local
+              link.innerHTML += ' (Local)';
+            }
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

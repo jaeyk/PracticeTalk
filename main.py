@@ -23,6 +23,7 @@ def resolve_static_dir() -> Path:
 
 
 STATIC_DIR = resolve_static_dir()
+DIST_DIR = Path(__file__).resolve().parent / "dist"
 
 app = FastAPI(title="Talk Practice — edge-tts")
 # Development-friendly CORS (restrict in production)
@@ -34,6 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+if DIST_DIR.exists():
+    app.mount("/dist", StaticFiles(directory=str(DIST_DIR)), name="dist")
 
 
 @app.get("/")
