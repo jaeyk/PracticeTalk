@@ -72,6 +72,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
       }
+      .file-links a { display: inline-block; margin: 4px 0; }
       @media (max-width: 700px) {
         .grid { grid-template-columns: 1fr; }
       }
@@ -83,27 +84,37 @@
         <h1>PracticeTalk Setup Guide</h1>
         <p>Install and start PracticeTalk without using the terminal.</p>
         <p class="muted">If you only want to start now, install the app for your platform, launch it, and use <code>http://127.0.0.1:8000</code> in your browser.</p>
-        <a class="btn" href="/">Open PracticeTalk</a>
+        <a class="btn" href="app.html">Open PracticeTalk</a>
       </section>
+
+      <h2>What This App Is</h2>
+      <article class="card">
+        <p>PracticeTalk is a speech rehearsal tool. You paste your presentation script (or upload a text file), and it creates spoken audio so you can hear pacing, flow, and transitions before presenting.</p>
+        <ul>
+          <li>Input: pasted text or <code>.txt</code> file</li>
+          <li>Output: downloadable speech audio (<code>MP3</code> or <code>WAV</code>)</li>
+          <li>Controls: voice selection and speaking pace</li>
+        </ul>
+      </article>
 
       <h2>1. Choose Your Install Method</h2>
       <div class="grid">
         <article class="card ok">
           <h3>Recommended: Installer</h3>
           <p>Use the installer package from your download source:</p>
-          <ul>
-            <li>macOS: <code>PracticeTalk-mac.pkg</code></li>
-            <li>Windows: <code>PracticeTalk-Setup.exe</code></li>
-          </ul>
+          <div class="file-links">
+            <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-mac.pkg">Download macOS installer (.pkg)</a><br />
+            <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-Setup.exe">Download Windows installer (.exe)</a>
+          </div>
           <p>This gives you standard app installation and shortcuts.</p>
         </article>
         <article class="card">
           <h3>Portable App</h3>
           <p>If you received a portable build instead of an installer:</p>
-          <ul>
-            <li>macOS: <code>PracticeTalk.app</code></li>
-            <li>Windows: <code>PracticeTalk.exe</code></li>
-          </ul>
+          <div class="file-links">
+            <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-mac.zip">Download portable macOS app (.zip)</a><br />
+            <a href="https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk.exe">Download portable Windows app (.exe)</a>
+          </div>
           <p>Just open the app file directly.</p>
         </article>
       </div>

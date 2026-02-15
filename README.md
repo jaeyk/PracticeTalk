@@ -4,6 +4,18 @@ PracticeTalk turns your script into audio so you can rehearse your talk in a bro
 
 Jae Yeon Kim and Codex (2026).
 
+## Recent Updates
+
+- Added desktop launcher app entrypoint: `desktop_launcher.py`
+- Added installer build scripts:
+  - `scripts/build_installer_macos.sh`
+  - `scripts/build_installer_windows.bat`
+- Added Windows installer spec: `installers/windows/practicetalk.iss`
+- Added user help page: `static/help.html` (served at `/help`)
+- Added CI workflows:
+  - Manual desktop artifact build: `.github/workflows/desktop-build.yml`
+  - Tag-based release publishing: `.github/workflows/release.yml`
+
 ## Start Here (No Terminal Needed)
 
 ### Mac
@@ -25,6 +37,7 @@ Keep the launcher window open while using PracticeTalk. Close it to stop the app
 In-app help website:
 
 - `http://127.0.0.1:8000/help`
+- `http://127.0.0.1:8000/help.html`
 
 ## First-Time Setup (Automatic)
 
@@ -146,3 +159,15 @@ Tag and push example:
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+## Download for Users
+
+End users should download installers from the GitHub Releases page:
+
+- macOS installer: [PracticeTalk-mac.pkg](https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-mac.pkg)
+- Windows installer: [PracticeTalk-Setup.exe](https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-Setup.exe)
+
+If needed, portable builds are also attached:
+
+- [PracticeTalk-mac.zip](https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk-mac.zip)
+- [PracticeTalk.exe](https://github.com/jaeyk/PracticeTalk/releases/latest/download/PracticeTalk.exe)

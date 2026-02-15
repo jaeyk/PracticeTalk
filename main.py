@@ -51,6 +51,16 @@ async def help_page_html():
     return FileResponse(str(STATIC_DIR / "help.html"))
 
 
+@app.get("/app")
+async def app_page():
+    return FileResponse(str(STATIC_DIR / "app.html"))
+
+
+@app.get("/app.html")
+async def app_page_html():
+    return FileResponse(str(STATIC_DIR / "app.html"))
+
+
 # Small curated voice list for the UI
 VOICES = [
     {"name": "Ava (en-US)", "value": "en-US-AvaMultilingualNeural"},
