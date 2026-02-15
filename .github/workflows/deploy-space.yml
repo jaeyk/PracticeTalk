@@ -16,14 +16,14 @@ jobs:
           fetch-depth: 1
       - name: Push snapshot to Hugging Face Space
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN || vars.HF_TOKEN }}
           HF_SPACE_REPO: ${{ vars.HF_SPACE_REPO }}
           HF_SPACE_REPO_FALLBACK: jaeykim/PracticeTalk
         run: |
           set -euo pipefail
 
           if [ -z "${HF_TOKEN:-}" ]; then
-            echo "HF_TOKEN secret is missing"
+            echo "HF_TOKEN is missing. Set repository Secret HF_TOKEN (preferred) or Variable HF_TOKEN."
             exit 1
           fi
 
