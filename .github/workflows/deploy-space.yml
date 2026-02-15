@@ -15,4 +15,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push https://jaeykim:$HF_TOKEN@huggingface.co/spaces/jaeykim/PracticeTalk main
+          git push --force https://oauth2:$HF_TOKEN@huggingface.co/spaces/jaeykim/PracticeTalk main
