@@ -150,7 +150,8 @@
     <p><strong>Windows (Command Prompt)</strong></p>
     <pre><code>scripts\run_local.bat</code></pre>
     <p class="note">These scripts create <code>.venv</code>, install dependencies, start the server, and open
-      <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.</p>
+      <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.
+    </p>
     <p><strong>Troubleshooting</strong></p>
     <ul>
       <li><strong>Python not found:</strong> install Python 3.10+ from <code>https://www.python.org/downloads/</code>,
@@ -211,8 +212,15 @@
     });
 
     function apiUrl(path) {
-      const base = backendInput.value.trim().replace(/\/+$/, '');
+      let base = backendInput.value.trim();
       if (!base) return path;
+
+      // Ensure protocol exists
+      if (!/^https?:\/\//i.test(base)) {
+        base = 'http://' + base;
+      }
+
+      base = base.replace(/\/+$/, '');
       return `${base}${path}`;
     }
 
